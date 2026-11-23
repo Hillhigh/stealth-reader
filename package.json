@@ -19,6 +19,10 @@
   "build": {
     "appId": "com.input.helper.reader",
     "productName": "Input Helper",
+    "asarUnpack": [
+      "node_modules/koffi/**",
+      "node_modules/@koromix/**"
+    ],
     "files": [
       "src/**/*",
       "assets/**/*",
@@ -41,5 +45,9 @@
     "portable": {
       "artifactName": "InputHelper-Portable.exe"
     }
+  },
+  "dependencies": {
+    "@koromix/koffi-win32-x64": "3.3.8",
+    "koffi": "^3.3.8"
   }
 }

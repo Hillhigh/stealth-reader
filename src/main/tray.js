@@ -8,8 +8,8 @@ const ICON_NORMAL = path.join(__dirname, '..', '..', 'assets', 'icon.ico');
 const ICON_STEALTH = path.join(__dirname, '..', '..', 'assets', 'icon-stealth.ico');
 
 class TrayManager {
-  constructor({ onToggle, onSetEdge, onSetBossKey, onSetAutoStart, onQuit }) {
-    this.handlers = { onToggle, onSetEdge, onSetBossKey, onSetAutoStart, onQuit };
+  constructor({ onToggle, onSetEdge, onSetBossKey, onSetAutoStart, onQuit, onHiderBind, onHiderUnbind, onSetMode }) {
+    this.handlers = { onToggle, onSetEdge, onSetBossKey, onSetAutoStart, onQuit, onHiderBind, onHiderUnbind, onSetMode };
     this.stealth = false;
     this.bossKeyOk = true;
     this.tray = null;
@@ -88,6 +88,20 @@ class TrayManager {
         click: () => this.handlers.onSetBossKey()
       },
       {
+        label: `窗口隐藏器${this.hiderLabel(c)}`,
+        submenu: [
+          {
+            label: '绑定当前前台窗口（先点开目标窗口再选此项）',
+            click: () => this.handlers.onHiderBind()
+          },
+          {
+            label: '解除绑定',
+            enabled: Boolean(c.hiderTarget),
+            click: () => this.handlers.onHiderUnbind()
+          }
+        ]
+      },
+      {
         label: '开机自启',
         type: 'checkbox',
         checked: Boolean(c.openAtLogin),
@@ -97,6 +111,12 @@ class TrayManager {
       { label: '退出', click: () => this.handlers.onQuit() }
     ]);
     this.tray.setContextMenu(menu);
+  }
+
+  hiderLabel(c) {
+    if (!c.hiderTarget) return '：未绑定';
+    const t = c.hiderTarget.title || c.hiderTarget.className || '';
+    return `：${t.slice(0, 12)}`;
   }
 
   destroy() {

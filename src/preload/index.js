@@ -12,6 +12,9 @@ contextBridge.exposeInMainWorld('readerAPI', {
   setEdge: (edgeName) => ipcRenderer.invoke('app:set-edge', edgeName),
   clearLogin: () => ipcRenderer.invoke('app:clear-login'),
   fitContent: (code) => ipcRenderer.invoke('app:fit-content', code),
+  hiderBindForeground: () => ipcRenderer.invoke('hider:bind-foreground'),
+  hiderUnbind: () => ipcRenderer.invoke('hider:unbind'),
+  hiderState: () => ipcRenderer.invoke('hider:state'),
   quit: () => ipcRenderer.invoke('app:quit'),
   onStateChanged: (callback) => {
     if (typeof callback !== 'function') return;

@@ -70,6 +70,11 @@ function registerIPC({ edge, bossKey, trayManager, onStateChanged, onFirstRunCom
     return true;
   });
 
+  // 外部窗口隐藏器（模拟器等）：绑定前台窗口 / 解绑 / 查询状态
+  ipcMain.handle('hider:bind-foreground', () => require('./winHider').bindForeground());
+  ipcMain.handle('hider:unbind', () => require('./winHider').unbind());
+  ipcMain.handle('hider:state', () => require('./winHider').state());
+
   ipcMain.handle('app:quit', () => {
     require('electron').app.quit();
   });

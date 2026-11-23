@@ -406,3 +406,30 @@ v1 交付后用户双击便携版"打不开"——实为程序正常启动但窗
 - 点击书名 → **成功进入 reader**（webRequest 方案）：URL=/reader/…、章节正文显示（第二百六十章）、`svip:false`、无 `.reader-toolbar` ✓。
 - 阅读页点「书架」按钮返回：书架恢复桌面 UA、书籍/缩放正常 ✓。
 - 隔离实验已证实 will-navigate + setUserAgent = 导航取消（根因明确）。
+
+---
+
+# 附录：v8 变更（外部窗口隐藏器，2026-11-23）
+
+## 需求
+用户提出："你可以把鼠标放上去就显示，挪开就隐藏的功能加入到这个模拟器里吗，或者你做一个有这种功能的模拟器"——希望把阅读窗已有的"鼠标唤出"摸鱼逻辑扩展到任意外部窗口（安卓模拟器、其他软件），模拟器装好后一键绑定即可。
+
+## 技术选型
+- **DWM Cloak 不可行**：`DwmSetWindowAttribute(DWMWA_CLOAK)` 对外部进程窗口返回 E_ACCESSDENIED（实测 -2147024891）。放弃。
+- **改用 ShowWindow(SW_HIDE/SW_SHOWNA)**：窗口从屏幕与任务栏完全消失、目标程序继续运行；SW_SHOWNA 避免抢焦点；IsIconic 时先 SW_RESTORE。
+- **FFI 用 koffi 3.3.8**：注意其二进制在独立包 `@koromix/koffi-win32-x64@3.3.8`（koffi deps 为空），打包必须显式安装 + `asarUnpack: ["node_modules/koffi/**", "node_modules/@koromix/**"]`。koffi 原型语法：原型字符串 + `koffi.struct()` 注册（struct 必须先于 user32.func 注册；EnumWindows 回调在 3.x 原型里不可用，已绕开）。
+
+## 实现
+- `src/main/winHider.js`：`bindForeground()` 绑定前台窗口（读 className/title 存 `config.hiderTarget`）→ `tick(cursor)` 每 60ms（挂在 edgeController._poll）：hidden 时鼠标进矩形 ±8px 容差 doShow；visible 时移出矩形立即 doHide（与阅读窗 graceMs=0 一致）。句柄失效按类名 FindWindowW 自动重找。`setStealth(on)` 老板键联动：彻底隐藏 + stealthLock（解锁前 tick 直接 return，鼠标移回不显示）。`unbind()` 恢复显示 + 清配置。`restoreOnBoot()` 启动按持久化 meta 重绑。
+- `ipc.js`：`hider:bind-foreground` / `hider:unbind` / `hider:state`；`tray.js` 加「窗口隐藏器」子菜单（绑定/解绑，绑定成功弹 dialog 并 rebuild）。
+- `config.js`：`hiderTarget`（schemaVersion 5 白名单追加，null 默认）。
+
+## GUI 实测（koffi 脚本 + CDP 驱动，记事本为目标窗口）
+1. 绑定前台记事本：`{ok:true, className:"Notepad"}` ✓，config.json 写入 hiderTarget ✓
+2. 绑定后鼠标在矩形内 → 保持可见 ✓
+3. 移开（10,10）→ 隐藏 ✓；移入中心（928,585）→ 显示 ✓；再移开 → 隐藏 ✓
+4. 老板键 ON（toggleStealth）：鼠标在窗口内仍强制隐藏（stealthLock）✓；OFF 后按鼠标位置恢复显示 ✓
+5. 解绑：ok:true，窗口恢复显示，state 全清，config hiderTarget=null ✓
+6. 重启应用：restoreOnBoot 自动恢复绑定（bound=true、meta 一致）✓；重启后隐藏/显示循环正常 ✓
+7. 解绑清理测试窗口 ✓
+

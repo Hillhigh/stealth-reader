@@ -55,6 +55,8 @@ function handleStealth(active) {
   if (active) edge.enterStealth();
   else edge.exitStealth();
   trayManager.setStealth(active);
+  // 老板键同时作用于外部窗口隐藏器（模拟器等）
+  try { require('./winHider').setStealth(active); } catch (_) {}
   broadcastState({ edgeState: edge.getState(), stealth: active });
 }
 
@@ -157,6 +159,11 @@ function bootstrap() {
   createWindow();
 
   edge = new EdgeController(mainWindow);
+  // 启动时按持久化记录恢复外部窗口绑定（模拟器等）
+  try {
+    const hr = require('./winHider').restoreOnBoot();
+    if (hr.ok) console.log('[winHider] 已恢复绑定:', hr.title || hr.className);
+  } catch (_) {}
   trayManager = new TrayManager({
     onToggle: () => {
       if (bossKey.isActive()) {
@@ -176,6 +183,23 @@ function bootstrap() {
       edge.refreshBounds();
     },
     onSetBossKey: openBossKeyDialog,
+    onHiderBind: () => {
+      const r = require('./winHider').bindForeground();
+      dialog.showMessageBoxSync({
+        type: r.ok ? 'info' : 'warning',
+        buttons: ['知道了'],
+        title: '窗口隐藏器',
+        message: r.ok ? '绑定成功' : '绑定失败',
+        detail: r.ok
+          ? `已绑定「${r.title || r.className}」。之后鼠标移开该窗口会立即隐藏，鼠标放回原位置即显示，老板键 ${config.load().bossKey} 也会一并隐藏它。`
+          : (r.error || '未知错误')
+      });
+      trayManager.rebuild();
+    },
+    onHiderUnbind: () => {
+      require('./winHider').unbind();
+      trayManager.rebuild();
+    },
     onSetAutoStart: (enabled) => {
       config.update({ openAtLogin: enabled });
       app.setLoginItemSettings({ openAtLogin: enabled });

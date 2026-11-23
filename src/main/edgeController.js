@@ -261,6 +261,8 @@ class EdgeController extends EventEmitter {
   }
 
   _poll() {
+    // 外部窗口隐藏器（模拟器等）与阅读窗共享同一轮询与鼠标位置
+    try { require('./winHider').tick(screen.getCursorScreenPoint()); } catch (_) {}
     if (this._dragging) return;
     if (this.state === STATE.STEALTH || this.state === STATE.SHOWING || this.state === STATE.HIDING) {
       return;

@@ -29,6 +29,7 @@ const DEFAULTS = {
   idleOpacity: 0,
   resizable: true,
   firstRunShown: false,
+  hiderTarget: null,   // 外部窗口隐藏器绑定目标 {className,title}，null=未绑定
   schemaVersion: 5
 };
 
@@ -74,7 +75,8 @@ const EDITABLE_KEYS = new Set([
   'edge', 'windowWidth', 'windowHeight', 'revealPx', 'triggerBandPx',
   'graceMs', 'animationMs', 'pollMs', 'bossKey',
   'normalTrayLabel', 'stealthTrayLabel', 'openAtLogin', 'cleanMode', 'url', 'homeUrl',
-  'mode', 'windowX', 'windowY', 'idleOpacity', 'firstRunShown', 'resizable'
+  'mode', 'windowX', 'windowY', 'idleOpacity', 'firstRunShown', 'resizable',
+  'hiderTarget'
 ]);
 
 let cache = null;

@@ -122,3 +122,14 @@
 - [x] **L4** 工具栏淡化 CSS：默认 6% 透明不干扰，hover 恢复可点，功能不丢
 - [x] **L5** 验证：书架→点书→reader（免SVIP+正文+无浮窗）→返回书架（UA 自动恢复）全链路 PASS；更新文档、打包、推送、交付
 - **验收**：阅读页无 SVIP 提示、正文全本可读、界面无常驻浮窗、书架/登录/自适应不回归均 PASS
+
+---
+
+## 阶段 M：v8 外部窗口隐藏器（用户需求：模拟器也要鼠标唤出）
+- [x] **M1** 技术选型：DWM Cloak 对外部进程 E_ACCESSDENIED（实测）→ ShowWindow(SW_HIDE/SW_SHOWNA) + koffi FFI
+- [x] **M2** winHider.js：bindForeground / tick(60ms 轮询) / setStealth(老板键锁定) / unbind / restoreOnBoot，句柄失效按类名自动重找
+- [x] **M3** 装配：config.hiderTarget（v5 白名单）、ipc 3 个 handler、preload API、tray 子菜单（绑定弹窗确认）、edgeController._poll 挂 tick
+- [x] **M4** 打包：显式安装 @koromix/koffi-win32-x64@3.3.8 + asarUnpack（koffi 二进制在独立包）
+- [x] **M5** GUI 实测 7 项全 PASS：绑定、矩形内保持、移开隐藏、移入显示、老板键锁定/解锁、解绑恢复、重启自动恢复绑定
+- [x] **M6** 更新 README/DESIGN/TASK，重新打包（验证 asarUnpack 后 koffi 可用），推送，交付
+- **验收**：记事本模拟目标窗口，鼠标唤出/老板键/持久化/重启恢复全部 PASS；模拟器装好后绑定其窗口即可获得同款摸鱼体验
