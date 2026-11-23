@@ -40,6 +40,36 @@ function registerIPC({ edge, bossKey, trayManager, onStateChanged, onFirstRunCom
     return true;
   });
 
+  // 在番茄 webview 页面内执行内容自适应脚本（按窗口宽度缩放固定宽度的列表页）
+  ipcMain.handle('app:fit-content', (event, code) => {
+    const { webContents } = require('electron');
+    for (const wc of webContents.getAllWebContents()) {
+      try {
+        const u = wc.getURL();
+        if (u && /fanqienovel\.com/.test(u) && !wc.isDestroyed()) {
+          wc.executeJavaScript(code, true).catch(() => {});
+        }
+      } catch (_) {}
+    }
+    return true;
+  });
+
+  // 清除番茄 webview 的登录态（cookies + 本地存储），用于重新登录/切换账号
+  ipcMain.handle('app:clear-login', async () => {
+    const { session } = require('electron');
+    const ses = session.fromPartition('persist:fanqie');
+    try {
+      await ses.clearStorageData({
+        storages: ['cookies', 'localstorage', 'indexdb', 'serviceworkers', 'cache', 'webworkers', 'appcache', 'filesystem', 'shadercache', 'websql']
+      });
+    } catch (err) {
+      // 某些 storage 类型可能不支持，忽略后继续清 cookies
+      try { await ses.clearStorageData({ storages: ['cookies', 'localstorage'] }); } catch (_) {}
+    }
+    try { await ses.clearCache(); } catch (_) {}
+    return true;
+  });
+
   ipcMain.handle('app:quit', () => {
     require('electron').app.quit();
   });

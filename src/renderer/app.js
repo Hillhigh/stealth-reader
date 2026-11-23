@@ -7,8 +7,10 @@ const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 const btnMode = document.getElementById('btnMode');
 const btnShelf = document.getElementById('btnShelf');
+const btnLogin = document.getElementById('btnLogin');
 const onboarding = document.getElementById('onboarding');
 const settings = document.getElementById('settings');
+const loginConfirm = document.getElementById('loginConfirm');
 
 const setMode = document.getElementById('setMode');
 const setOpacity = document.getElementById('setOpacity');
@@ -54,6 +56,76 @@ function desktopUrl(url) {
   } catch (err) {
     return url;
   }
+}
+
+// ===== 内容自适应窗口尺寸 =====
+// 番茄书架/首页是固定 ~1224px 宽的桌面布局，挤进小窗口会横向溢出、书被裁切。
+// 阅读页本身是响应式的（宽度=窗口宽），不能缩放，否则字号变小影响阅读。
+// 这里在 webview 页面内按 scrollWidth / 窗口宽 计算缩放比，仅对溢出的列表页缩放。
+const FIT_SCRIPT = `
+(function(){
+  try {
+    var w = window.innerWidth;
+    var body = document.body;
+    // 先恢复 zoom=1 再测量真实内容宽度（zoom 会影响 scrollWidth 测量）
+    body.style.zoom = '1';
+    var sw = Math.max(document.documentElement.scrollWidth, body.scrollWidth || 0);
+    // 只有明显溢出（超过窗口 8px）才缩放；阅读页本身响应式，跳过
+    if (sw > w + 8) {
+      // 书架页：完整适配窗口（约 1224px 内容缩到 0.29 也能看清单行书名）。
+      // 书城首页：内容超宽（约 2500px），设 0.45 下限保可读性，允许少量横向滚动。
+      var isShelf = /bookshelf/.test(location.pathname);
+      var minZoom = isShelf ? 0.05 : 0.45;
+      body.style.zoom = Math.max(minZoom, Math.min(1, w / sw));
+    } else {
+      body.style.zoom = '1';
+    }
+  } catch (e) {}
+})();
+`;
+
+let fitTimer = null;
+function fitContent() {
+  if (typeof API.fitContent !== 'function') return;
+  API.fitContent(FIT_SCRIPT).catch(() => {});
+}
+
+// 页面加载完成后缩放；窗口尺寸变化时节流重算
+function scheduleFit() {
+  if (fitTimer) clearTimeout(fitTimer);
+  fitTimer = setTimeout(() => {
+    fitContent();
+    // 页面图片/字体加载完后布局可能变化，二次注入确认
+    if (fitTimer) clearTimeout(fitTimer);
+    fitTimer = setTimeout(fitContent, 900);
+  }, 200);
+}
+
+// ===== 重新登录 / 切换账号 =====
+function openLoginConfirm() {
+  loginConfirm.classList.remove('hidden');
+  if (typeof API.holdVisible === 'function') API.holdVisible(true);
+}
+function closeLoginConfirm() {
+  loginConfirm.classList.add('hidden');
+  if (typeof API.holdVisible === 'function') API.holdVisible(false);
+}
+async function doRelogin() {
+  closeLoginConfirm();
+  loading.classList.remove('hidden');
+  try {
+    if (typeof API.clearLogin === 'function') await API.clearLogin();
+  } catch (err) {
+    console.error('清除登录态失败', err);
+  }
+  // 清态后回到书城首页，用户在此扫码/手机号登录
+  const target = HOME_URL;
+  config = await API.setConfig({ url: target });
+  onShelf = false;
+  btnShelf.textContent = '书架';
+  btnShelf.title = '切换到我的书架';
+  // 强制重新加载：先加不同查询参数避开同 URL 不重载的问题
+  webview.setAttribute('src', target + '&relogin=' + Date.now());
 }
 
 function loadSite() {
@@ -135,7 +207,10 @@ async function init() {
     console.error('读取配置失败', err);
   }
 
-  webview.addEventListener('did-finish-load', () => loading.classList.add('hidden'));
+  webview.addEventListener('did-finish-load', () => {
+    loading.classList.add('hidden');
+    scheduleFit(); // 页面加载后按窗口宽度适配内容
+  });
   webview.addEventListener('did-fail-load', (e) => {
     if (e.errorCode === -3) return;
     loading.classList.remove('hidden');
@@ -157,6 +232,11 @@ async function init() {
 
   document.getElementById('btnReload').addEventListener('click', loadSite);
   btnShelf.addEventListener('click', toggleShelf);
+  btnLogin.addEventListener('click', openLoginConfirm);
+  document.getElementById('btnLoginCancel').addEventListener('click', closeLoginConfirm);
+  document.getElementById('btnLoginConfirm').addEventListener('click', doRelogin);
+  // 窗口尺寸变化时重新适配内容（webview 会跟随窗口拉伸）
+  window.addEventListener('resize', scheduleFit);
   btnMode.addEventListener('click', async () => {
     const next = config.mode === 'edge' ? 'free' : 'edge';
     config = await API.setConfig({ mode: next });

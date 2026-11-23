@@ -14,6 +14,7 @@
         <span id="statusText">待命</span>
       </div>
       <div class="title-actions">
+        <button id="btnLogin" title="重新登录 / 切换番茄账号">登录</button>
         <button id="btnShelf" title="切换书架 / 书城首页">书城</button>
         <button id="btnSettings" title="设置">⚙</button>
         <button id="btnMode" title="切换定位模式">自由摆放</button>
@@ -39,7 +40,8 @@
           <p><b>3. 唤出</b>：鼠标移回原位置即可恢复；按 <code id="obRevealKey">Ctrl+Alt+E</code> 也能随时唤出。</p>
           <p><b>4. 老板键</b>：<code id="obBossKey">Ctrl+Alt+Q</code> 一键彻底隐藏，再按恢复。</p>
           <p><b>5. 书架</b>：打开即进入你的书架；点标题栏「书城」可切换到书城找书。</p>
-          <p><b>6. 设置</b>：标题栏「⚙」里可切换隐藏模式、淡化程度和窗口缩放。</p>
+          <p><b>6. 登录</b>：书架没同步最新书时，点标题栏「登录」重新登录（用与手机相同的账号方式）。</p>
+          <p><b>7. 设置</b>：标题栏「⚙」里可切换隐藏模式、淡化程度和窗口缩放；内容会自动适配窗口大小。</p>
         </div>
         <button id="btnGotIt">知道了，开始使用</button>
       </div>
@@ -79,6 +81,20 @@
             <button id="btnResetSettings">恢复默认</button>
             <span id="setSaved" class="set-saved">已自动保存</span>
           </div>
+        </div>
+      </div>
+    </div>
+    <div id="loginConfirm" class="hidden">
+      <div class="lc-card">
+        <div class="lc-title">重新登录番茄账号</div>
+        <div class="lc-body">
+          <p>这会清除当前账号的登录状态，然后打开番茄首页。</p>
+          <p>在打开的页面里用<b>手机 App 相同的方式</b>（手机号验证码 / 扫码）登录，书架与阅读进度就会同步过来。</p>
+          <p class="lc-hint">如果你的书架没更新最新加的书，多半是登录态失效了，用这个重新登录一次即可。</p>
+        </div>
+        <div class="lc-actions">
+          <button id="btnLoginCancel">取消</button>
+          <button id="btnLoginConfirm">清除并重新登录</button>
         </div>
       </div>
     </div>

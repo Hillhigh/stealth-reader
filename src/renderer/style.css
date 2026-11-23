@@ -68,6 +68,8 @@ html, body {
   cursor: pointer;
 }
 .title-actions button:hover { background: rgba(255, 255, 255, 0.18); }
+.title-actions button#btnLogin { background: #c9762f; color: #fff; }
+.title-actions button#btnLogin:hover { background: #d98a45; }
 .title-actions button.close {
   font-size: 16px;
   line-height: 1;
@@ -237,3 +239,59 @@ webview {
 }
 #btnResetSettings:hover { background: #eef1f3; }
 .set-saved { font-size: 11px; color: #1d9e75; }
+
+/* 重新登录确认浮层 */
+#loginConfirm {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 26, 32, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-app-region: no-drag;
+}
+#loginConfirm.hidden { display: none; }
+
+.lc-card {
+  width: 90%;
+  max-width: 380px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+.lc-title {
+  padding: 12px 16px;
+  background: #2b3138;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+}
+.lc-body { padding: 14px 16px 6px; }
+.lc-body p { font-size: 12px; line-height: 1.7; color: #444b52; margin-bottom: 9px; }
+.lc-body b { color: #c9762f; }
+.lc-hint { font-size: 11px !important; color: #888780 !important; }
+.lc-actions {
+  display: flex;
+  gap: 8px;
+  padding: 6px 16px 16px;
+}
+.lc-actions button {
+  flex: 1;
+  border: 1px solid #c8ccd0;
+  background: #fff;
+  color: #444b52;
+  font-size: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.lc-actions button:hover { background: #eef1f3; }
+.lc-actions button#btnLoginConfirm {
+  background: #c9762f;
+  border-color: #c9762f;
+  color: #fff;
+}
+.lc-actions button#btnLoginConfirm:hover { background: #d98a45; }
