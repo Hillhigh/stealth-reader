@@ -65,6 +65,15 @@ function desktopUrl(url) {
 const FIT_SCRIPT = `
 (function(){
   try {
+    // 阅读页右侧工具栏（目录/字号/夜间/翻章）：默认淡化到 6% 不干扰阅读，
+    // 鼠标悬停立即恢复可点（移动版/桌面版都生效，功能不丢失）。
+    var st = document.getElementById('__reader_fit_style');
+    if (!st) {
+      st = document.createElement('style');
+      st.id = '__reader_fit_style';
+      document.head.appendChild(st);
+    }
+    st.textContent = '.reader-toolbar{opacity:0.06!important;transition:opacity .25s}.reader-toolbar:hover{opacity:1!important}';
     var w = window.innerWidth;
     var body = document.body;
     // 先恢复 zoom=1 再测量真实内容宽度（zoom 会影响 scrollWidth 测量）

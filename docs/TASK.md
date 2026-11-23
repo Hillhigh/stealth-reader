@@ -112,3 +112,13 @@
 - [x] **K4** resize 实时重算 + did-finish-load 双次注入；修复 executeScript 不存在、zoom 影响测量、src 同 URL 不重载三个坑
 - [x] **K5** 端到端验证（登录流程/书架/窗口缩放/阅读页/首页）、更新 README/DESIGN/TASK、重新打包、推送、交付
 - **验收**：一键重新登录可见登录入口、书架 5 本全显示无横向溢出、窗口缩放实时适配、阅读页字号不变均 PASS
+
+---
+
+## 阶段 L：v7 手机同款阅读（用户反馈：SVIP 限制 + 浮窗）
+- [x] **L1** 实测对比：桌面版 reader 有"SVIP网页畅读"横幅+常驻工具栏；移动版 reader 无横幅无浮窗；移动版书架番茄不提供
+- [x] **L2** 按请求切 UA：webRequest.onBeforeSendHeaders 按 URL/referrer 判定，reader 及其请求走 iPhone UA，其余走干净桌面 Chrome UA
+- [x] **L3** 踩坑定位：will-navigate 里 setUserAgent 会取消导航（隔离实验证实），改 webRequest 方案绕过
+- [x] **L4** 工具栏淡化 CSS：默认 6% 透明不干扰，hover 恢复可点，功能不丢
+- [x] **L5** 验证：书架→点书→reader（免SVIP+正文+无浮窗）→返回书架（UA 自动恢复）全链路 PASS；更新文档、打包、推送、交付
+- **验收**：阅读页无 SVIP 提示、正文全本可读、界面无常驻浮窗、书架/登录/自适应不回归均 PASS

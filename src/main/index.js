@@ -1,7 +1,7 @@
 'use strict';
 
 const path = require('path');
-const { app, BrowserWindow, shell, dialog, globalShortcut } = require('electron');
+const { app, BrowserWindow, shell, dialog, globalShortcut, session } = require('electron');
 const config = require('./config');
 const { EdgeController, STATE } = require('./edgeController');
 const { BossKey } = require('./bossKey');
@@ -15,6 +15,10 @@ let trayManager = null;
 let stateListeners = [];
 let isQuitting = false;
 let firstRunPending = false;
+
+// 干净浏览器 UA（去掉 Electron/InputHelper 标识，降低风控特征）
+const DESKTOP_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+const MOBILE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
 function broadcastState(state) {
   for (const fn of stateListeners) {
@@ -133,6 +137,21 @@ function bootstrap() {
   }
   app.on('second-instance', () => {
     if (edge) edge.show();
+  });
+
+  // 按请求目标切换 UA（改请求头，不动导航生命周期）：
+  // - 阅读页 /reader/ 主文档及由阅读页发起的请求（referrer 判定）用手机 UA 走移动版：
+  //   免"SVIP 网页畅读"限制（移动网页与手机端同权益），且无常驻章节/字体工具栏，
+  //   阅读体验与手机一致。
+  // - 书架/首页等用桌面 UA + force_mobile=0（移动版书架番茄不提供，只有下载引导）。
+  // 注意：不能在 webContents.will-navigate 里 setUserAgent——实测会取消正在进行的导航
+  // （点击书架书籍后导航被取消并回退书架）。webRequest 改头无此问题。
+  const fanqieSession = session.fromPartition('persist:fanqie');
+  fanqieSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    const isReader = /fanqienovel\.com\/reader\//.test(details.url)
+      || /fanqienovel\.com\/reader\//.test(details.referrer || '');
+    const headers = { ...details.requestHeaders, 'User-Agent': isReader ? MOBILE_UA : DESKTOP_UA };
+    callback({ requestHeaders: headers });
   });
 
   createWindow();
