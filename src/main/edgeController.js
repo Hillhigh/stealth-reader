@@ -65,8 +65,18 @@ class EdgeController extends EventEmitter {
       this.leftAt = null;
       // 首次提示期间不要因鼠标移出而淡出，给足 60 秒
       this.firstRunHoldUntil = Date.now() + 60000;
+    } else if (this.mode() === 'free') {
+      // v3.1：冷启动先正常显示，让用户看得见窗口位置；
+      // 鼠标移开后才隐藏（符合"放上显示、离开隐藏"的直觉）。
+      // 给 2 秒缓冲，避免程序刚起来鼠标恰好不在窗口内就立刻隐藏。
+      this._setOpacity(1);
+      this._setClickThrough(false);
+      this.state = STATE.VISIBLE;
+      this.leftAt = null;
+      this.firstRunHoldUntil = Date.now() + 2000;
     } else {
-      this._setOpacity(this.mode() === 'free' ? this._idleOpacity() : 1);
+      // edge 模式：贴边隐藏（v1 行为）
+      this._setOpacity(1);
       this._setClickThrough(true);
       this.state = STATE.HIDDEN;
       this.leftAt = null;
