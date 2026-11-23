@@ -91,7 +91,7 @@ class TrayManager {
         label: `窗口隐藏器${this.hiderLabel(c)}`,
         submenu: [
           {
-            label: '绑定当前前台窗口（先点开目标窗口再选此项）',
+            label: '绑定前台窗口（3秒倒计时，去点目标窗口）',
             click: () => this.handlers.onHiderBind()
           },
           {

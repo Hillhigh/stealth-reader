@@ -118,6 +118,10 @@ module.exports = {
     const className = readClassName(h);
     const title = readTitle(h);
     if (!className && !title) return { ok: false, error: '无法读取窗口信息' };
+    // 无标题窗口通常是浏览器/工具的无名辅助窗，绑了也不会是目标程序
+    if (!title) {
+      return { ok: false, error: `该窗口没有标题（类名 ${className || '未知'}），多半不是目标程序的主窗口。\n请先把目标窗口点到最前（点一下它），再重新绑定。` };
+    }
     hwnd = h;
     meta = { className, title };
     hidden = a.IsWindowVisible(h) ? false : true;

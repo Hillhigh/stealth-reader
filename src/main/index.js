@@ -184,17 +184,31 @@ function bootstrap() {
     },
     onSetBossKey: openBossKeyDialog,
     onHiderBind: () => {
-      const r = require('./winHider').bindForeground();
-      dialog.showMessageBoxSync({
-        type: r.ok ? 'info' : 'warning',
-        buttons: ['知道了'],
+      // 倒计时绑定：先给用户 3 秒把目标窗口点到前台，避免绑错（如绑到浏览器无名窗）
+      dialog.showMessageBox({
+        type: 'info',
+        buttons: ['取消', '开始绑定'],
+        defaultId: 1,
+        cancelId: 0,
         title: '窗口隐藏器',
-        message: r.ok ? '绑定成功' : '绑定失败',
-        detail: r.ok
-          ? `已绑定「${r.title || r.className}」。之后鼠标移开该窗口会立即隐藏，鼠标放回原位置即显示，老板键 ${config.load().bossKey} 也会一并隐藏它。`
-          : (r.error || '未知错误')
+        message: '3 秒后绑定前台窗口',
+        detail: '点「开始绑定」后，请立即用鼠标点一下目标窗口（如 MuMu 模拟器），把它切到最前面。'
+      }).then(({ response }) => {
+        if (response !== 1) return;
+        setTimeout(() => {
+          const r = require('./winHider').bindForeground();
+          dialog.showMessageBoxSync({
+            type: r.ok ? 'info' : 'warning',
+            buttons: ['知道了'],
+            title: '窗口隐藏器',
+            message: r.ok ? '绑定成功' : '绑定失败',
+            detail: r.ok
+              ? `已绑定「${r.title || r.className}」。之后鼠标移开该窗口会立即隐藏，鼠标放回原位置即显示，老板键 ${config.load().bossKey} 也会一并隐藏它。`
+              : (r.error || '未知错误')
+          });
+          trayManager.rebuild();
+        }, 3000);
       });
-      trayManager.rebuild();
     },
     onHiderUnbind: () => {
       require('./winHider').unbind();
