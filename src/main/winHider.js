@@ -78,7 +78,11 @@ function findByMeta() {
   if (!meta) return null;
   const a = ensureApi();
   if (!a) return null;
-  // 类名优先（模拟器类名稳定），其次按标题
+  // 类名+标题精确匹配优先，其次仅类名（模拟器类名稳定），再次仅标题
+  if (meta.className && meta.title) {
+    const h = a.FindWindowW(meta.className, meta.title);
+    if (h) return h;
+  }
   if (meta.className) {
     const h = a.FindWindowW(meta.className, null);
     if (h) return h;
