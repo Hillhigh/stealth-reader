@@ -1,0 +1,45 @@
+{
+  "name": "stealth-reader",
+  "version": "1.0.0",
+  "description": "Lightweight Windows desktop reader shell with edge-hide and boss key",
+  "main": "src/main/index.js",
+  "productName": "Input Helper",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:nsis": "electron-builder --win nsis",
+    "build:portable": "electron-builder --win portable",
+    "icons": "python scripts/make-icons.py"
+  },
+  "devDependencies": {
+    "electron": "45.4.1",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "com.input.helper.reader",
+    "productName": "Input Helper",
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": false,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Input Helper"
+    },
+    "portable": {
+      "artifactName": "InputHelper-Portable.exe"
+    }
+  }
+}
