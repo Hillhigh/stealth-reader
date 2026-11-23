@@ -67,6 +67,8 @@ function readClassName(h) {
 }
 
 function refreshRect() {
+  // 最小化时 GetWindowRect 返回 -32000 的无效坐标，保留最后一次有效矩形作为唤出区
+  if (api.IsIconic(hwnd)) return rect !== null;
   const r = {};
   if (!api.GetWindowRect(hwnd, r)) return false;
   if (r.right - r.left <= 0 || r.bottom - r.top <= 0) return false;
