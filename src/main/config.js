@@ -11,7 +11,7 @@ const DEFAULTS = {
   windowHeight: 760,
   revealPx: 6,
   triggerBandPx: 18,
-  graceMs: 500,
+  graceMs: 0,
   animationMs: 220,
   pollMs: 60,
   bossKey: 'Ctrl+Alt+Q',
@@ -24,8 +24,20 @@ const DEFAULTS = {
   windowX: null,
   windowY: null,
   idleOpacity: 0.06,
-  firstRunShown: false
+  firstRunShown: false,
+  schemaVersion: 2
 };
+
+// 配置迁移：把旧版残留的宽限期升级为"移开即隐藏"
+function migrate(parsed) {
+  const out = { ...parsed };
+  const ver = Number(parsed.schemaVersion) || 1;
+  if (ver < 2 && out.graceMs === 500) {
+    out.graceMs = 0;
+  }
+  out.schemaVersion = 2;
+  return out;
+}
 
 const EDITABLE_KEYS = new Set([
   'edge', 'windowWidth', 'windowHeight', 'revealPx', 'triggerBandPx',
@@ -67,7 +79,18 @@ function load() {
       console.warn('[config] 读取失败，使用默认配置:', err.message);
     }
   }
-  cache = { ...DEFAULTS, ...sanitize(parsed) };
+  const migrated = migrate(parsed);
+  cache = { ...DEFAULTS, ...sanitize(migrated) };
+  // 若发生了迁移，写回磁盘使其一次性生效（保留用户其它设置与窗口位置）
+  if (Number(parsed.schemaVersion) !== 2 && Object.keys(parsed).length > 0) {
+    try {
+      const file = configPath();
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify(cache, null, 2), 'utf8');
+    } catch (err) {
+      console.warn('[config] 迁移写回失败:', err.message);
+    }
+  }
   return { ...cache };
 }
 

@@ -270,8 +270,14 @@ class EdgeController extends EventEmitter {
       } else {
         const now = Date.now();
         if (now < this.firstRunHoldUntil) return; // 首次提示宽限期内不淡出
+        const grace = Number(config.load().graceMs) || 0;
+        // 宽限期为 0：鼠标一移出当帧立即淡出，不等待下一轮轮询
+        if (grace <= 0) {
+          this.hide();
+          return;
+        }
         if (this.leftAt === null) this.leftAt = now;
-        if (now - this.leftAt >= Number(config.load().graceMs)) {
+        if (now - this.leftAt >= grace) {
           this.hide();
         }
       }
