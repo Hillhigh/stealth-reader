@@ -34,6 +34,12 @@ function registerIPC({ edge, bossKey, trayManager, onStateChanged, onFirstRunCom
     return true;
   });
 
+  // 设置面板/提示浮层打开时暂停自动隐藏，避免操作中被隐藏
+  ipcMain.handle('app:hold-visible', (event, hold) => {
+    edge.setHoldVisible(Boolean(hold));
+    return true;
+  });
+
   ipcMain.handle('app:quit', () => {
     require('electron').app.quit();
   });

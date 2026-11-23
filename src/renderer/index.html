@@ -14,9 +14,10 @@
         <span id="statusText">待命</span>
       </div>
       <div class="title-actions">
+        <button id="btnSettings" title="设置">⚙ 设置</button>
         <button id="btnMode" title="切换定位模式">自由摆放</button>
         <button id="btnStealth" title="老板键隐藏/恢复">隐身</button>
-        <button id="btnHide" title="淡出隐藏">收起</button>
+        <button id="btnHide" title="隐藏窗口">收起</button>
         <button id="btnQuit" title="退出" class="close">×</button>
       </div>
     </header>
@@ -32,13 +33,51 @@
       <div class="ob-card">
         <div class="ob-title">欢迎使用 Input Helper</div>
         <div class="ob-body">
-          <p><b>1. 移动窗口</b>：按住顶部标题栏可把窗口拖到任意位置，位置会被记住。</p>
-          <p><b>2. 自动隐藏</b>：鼠标移开约 0.5 秒，窗口会就地淡出成淡淡一层；</p>
-          <p><b>3. 唤出</b>：把鼠标移回窗口所在位置，它就恢复清晰。</p>
+          <p><b>1. 摆放窗口</b>：按住顶部标题栏把窗口拖到任意位置，拖拽边缘可改变大小。</p>
+          <p><b>2. 自动隐藏</b>：鼠标一移开，窗口立即完全隐藏，不留痕迹。</p>
+          <p><b>3. 唤出</b>：鼠标移回原位置即可恢复；按 <code id="obRevealKey">Ctrl+Alt+E</code> 也能随时唤出。</p>
           <p><b>4. 老板键</b>：<code id="obBossKey">Ctrl+Alt+Q</code> 一键彻底隐藏，再按恢复。</p>
-          <p class="ob-hint">右下角托盘图标可退出或切换模式。</p>
+          <p><b>5. 设置</b>：标题栏「设置」里可切换隐藏模式、淡化程度和窗口缩放。</p>
         </div>
         <button id="btnGotIt">知道了，开始使用</button>
+      </div>
+    </div>
+    <div id="settings" class="hidden">
+      <div class="set-card">
+        <div class="set-head">
+          <div class="set-title">设置</div>
+          <button id="btnCloseSettings" class="set-close">×</button>
+        </div>
+        <div class="set-body">
+          <div class="set-row">
+            <label for="setMode">隐藏模式</label>
+            <select id="setMode">
+              <option value="free">就地隐藏（原地消失，推荐）</option>
+              <option value="edge">贴边隐藏（缩进屏幕边缘）</option>
+            </select>
+          </div>
+          <div class="set-row">
+            <label for="setOpacity">淡化程度 <span id="setOpacityVal" class="set-val">0%</span></label>
+            <input type="range" id="setOpacity" min="0" max="50" step="1" value="0">
+            <p class="set-hint">0% = 完全无痕（推荐）；留一点透明度可当作位置锚点。</p>
+          </div>
+          <div class="set-row set-inline">
+            <label for="setResizable">窗口可拖拽缩放</label>
+            <input type="checkbox" id="setResizable" checked>
+          </div>
+          <div class="set-row set-inline">
+            <label for="setAutoStart">开机自启</label>
+            <input type="checkbox" id="setAutoStart">
+          </div>
+          <div class="set-row">
+            <label>快捷键</label>
+            <p class="set-hint">唤出窗口 <code>Ctrl+Alt+E</code> · 老板键隐身 <code id="setBossKey">Ctrl+Alt+Q</code></p>
+          </div>
+          <div class="set-save-line">
+            <button id="btnResetSettings">恢复默认</button>
+            <span id="setSaved" class="set-saved">已自动保存</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>

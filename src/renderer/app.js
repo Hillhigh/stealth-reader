@@ -7,15 +7,33 @@ const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 const btnMode = document.getElementById('btnMode');
 const onboarding = document.getElementById('onboarding');
+const settings = document.getElementById('settings');
+
+const setMode = document.getElementById('setMode');
+const setOpacity = document.getElementById('setOpacity');
+const setOpacityVal = document.getElementById('setOpacityVal');
+const setResizable = document.getElementById('setResizable');
+const setAutoStart = document.getElementById('setAutoStart');
 
 let config = {};
 let firstRunDone = false;
 let onboardingTimer = null;
+let saveTimer = null;
 
 function applyConfig(cfg) {
   config = cfg || {};
   btnMode.textContent = config.mode === 'edge' ? '贴边模式' : '自由摆放';
   document.getElementById('obBossKey').textContent = config.bossKey || 'Ctrl+Alt+Q';
+  document.getElementById('setBossKey').textContent = config.bossKey || 'Ctrl+Alt+Q';
+}
+
+function fillSettings() {
+  setMode.value = config.mode === 'edge' ? 'edge' : 'free';
+  const pct = Math.round((Number(config.idleOpacity) || 0) * 100);
+  setOpacity.value = String(Math.min(50, Math.max(0, pct)));
+  setOpacityVal.textContent = pct + '%';
+  setResizable.checked = config.resizable !== false;
+  setAutoStart.checked = Boolean(config.openAtLogin);
 }
 
 function loadSite() {
@@ -36,8 +54,21 @@ function updateState(state) {
     statusText.textContent = '阅读中';
   } else {
     statusDot.classList.add('hidden');
-    statusText.textContent = '已淡出';
+    statusText.textContent = '已隐藏';
   }
+}
+
+function flashSaved() {
+  const el = document.getElementById('setSaved');
+  el.textContent = '已保存 ✓';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { el.textContent = '已自动保存'; }, 1200);
+}
+
+async function savePatch(patch) {
+  config = await API.setConfig(patch);
+  applyConfig(config);
+  flashSaved();
 }
 
 function finishOnboarding() {
@@ -45,7 +76,19 @@ function finishOnboarding() {
   firstRunDone = true;
   if (onboardingTimer) clearTimeout(onboardingTimer);
   onboarding.classList.add('hidden');
+  if (typeof API.holdVisible === 'function') API.holdVisible(false);
   if (typeof API.completeFirstRun === 'function') API.completeFirstRun();
+}
+
+function openSettings() {
+  fillSettings();
+  settings.classList.remove('hidden');
+  if (typeof API.holdVisible === 'function') API.holdVisible(true);
+}
+
+function closeSettings() {
+  settings.classList.add('hidden');
+  if (typeof API.holdVisible === 'function') API.holdVisible(false);
 }
 
 async function init() {
@@ -56,16 +99,12 @@ async function init() {
     console.error('读取配置失败', err);
   }
 
-  webview.addEventListener('did-finish-load', () => {
-    loading.classList.add('hidden');
-  });
+  webview.addEventListener('did-finish-load', () => loading.classList.add('hidden'));
   webview.addEventListener('did-fail-load', (e) => {
     if (e.errorCode === -3) return;
     loading.classList.remove('hidden');
   });
-  webview.addEventListener('new-window', (e) => {
-    e.preventDefault();
-  });
+  webview.addEventListener('new-window', (e) => e.preventDefault());
 
   document.getElementById('btnReload').addEventListener('click', loadSite);
   btnMode.addEventListener('click', async () => {
@@ -78,13 +117,32 @@ async function init() {
   document.getElementById('btnQuit').addEventListener('click', () => API.quit());
   document.getElementById('btnGotIt').addEventListener('click', finishOnboarding);
 
-  API.onStateChanged((state) => {
-    updateState(state);
+  document.getElementById('btnSettings').addEventListener('click', openSettings);
+  document.getElementById('btnCloseSettings').addEventListener('click', closeSettings);
+  setMode.addEventListener('change', () => savePatch({ mode: setMode.value }));
+  setOpacity.addEventListener('input', () => {
+    setOpacityVal.textContent = setOpacity.value + '%';
+  });
+  setOpacity.addEventListener('change', () => {
+    savePatch({ idleOpacity: Number(setOpacity.value) / 100 });
+  });
+  setResizable.addEventListener('change', () => savePatch({ resizable: setResizable.checked }));
+  setAutoStart.addEventListener('change', () => savePatch({ openAtLogin: setAutoStart.checked }));
+  document.getElementById('btnResetSettings').addEventListener('click', async () => {
+    config = await API.setConfig({
+      mode: 'free', idleOpacity: 0, resizable: true,
+      graceMs: 0, edge: 'right'
+    });
+    applyConfig(config);
+    fillSettings();
+    flashSaved();
   });
 
-  // 首次启动：展示提示浮层，超时自动进入常规逻辑
+  API.onStateChanged(updateState);
+
   if (config.firstRunShown === false) {
     onboarding.classList.remove('hidden');
+    if (typeof API.holdVisible === 'function') API.holdVisible(true);
     onboardingTimer = setTimeout(finishOnboarding, 15000);
   }
 

@@ -1,7 +1,7 @@
 'use strict';
 
 const path = require('path');
-const { app, BrowserWindow, shell, dialog } = require('electron');
+const { app, BrowserWindow, shell, dialog, globalShortcut } = require('electron');
 const config = require('./config');
 const { EdgeController, STATE } = require('./edgeController');
 const { BossKey } = require('./bossKey');
@@ -61,7 +61,7 @@ function createWindow() {
     height: Number(c.windowHeight),
     frame: false,
     transparent: true,
-    resizable: false,
+    resizable: Boolean(c.resizable),
     movable: true,
     minimizable: false,
     maximizable: false,
@@ -82,14 +82,47 @@ function createWindow() {
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
   mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
 
+  // 无边框窗口启用边缘拖拽缩放（Windows/Linux）
+  applyResizeRegion();
+
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:\/\//.test(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
 
+  // 拖拽缩放后持久化新尺寸（节流）
+  let sizeTimer = null;
+  mainWindow.on('resized', () => {
+    if (sizeTimer) clearTimeout(sizeTimer);
+    sizeTimer = setTimeout(() => {
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+      const b = mainWindow.getBounds();
+      config.update({ windowWidth: b.width, windowHeight: b.height });
+      applyResizeRegion();
+    }, 300);
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+}
+
+/** 设置无边框窗口的可缩放边缘区域 */
+function applyResizeRegion() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (!config.load().resizable) {
+    try { mainWindow.setResizable(false); } catch (_) {}
+    return;
+  }
+  try { mainWindow.setResizable(true); } catch (_) {}
+  // setResizeRegion 仅 Windows/Linux 有效：四周 6px 为拖拽缩放热区
+  if (typeof mainWindow.setResizeRegion === 'function') {
+    try {
+      const [w, h] = mainWindow.getSize();
+      mainWindow.setResizeRegion({ x: 6, y: 6, width: w - 12, height: h - 12 });
+      mainWindow.setResizeRegionSize({ width: w, height: h });
+    } catch (_) {}
+  }
 }
 
 function bootstrap() {
@@ -106,7 +139,16 @@ function bootstrap() {
 
   edge = new EdgeController(mainWindow);
   trayManager = new TrayManager({
-    onToggle: () => bossKey.trigger(),
+    onToggle: () => {
+      if (bossKey.isActive()) {
+        bossKey.setActive(false);
+        handleStealth(false);
+      } else if (edge.getState() === 'HIDDEN') {
+        edge.show();
+      } else {
+        bossKey.trigger();
+      }
+    },
     onSetEdge: (edgeName) => config.update({ edge: edgeName }),
     onSetMode: (mode) => {
       config.update({ mode });
@@ -126,6 +168,17 @@ function bootstrap() {
   bossKey = new BossKey(handleStealth);
   const reg = bossKey.register(config.load().bossKey);
   trayManager.setBossKeyStatus(reg.ok);
+
+  // 唤出快捷键：无痕模式下随时强制显示窗口（含从 STEALTH 恢复）
+  const revealOk = globalShortcut.register('Ctrl+Alt+E', () => {
+    if (bossKey.isActive()) {
+      bossKey.setActive(false);
+      handleStealth(false);
+    }
+    edge.show();
+  });
+  console.log('[index] 唤出快捷键 Ctrl+Alt+E 注册' + (revealOk ? '成功' : '失败'));
+
   if (!reg.ok) {
     setTimeout(() => {
       dialog.showMessageBoxSync({
@@ -154,6 +207,9 @@ function bootstrap() {
     }
     if (changed.has('normalTrayLabel') || changed.has('stealthTrayLabel')) {
       trayManager.setStealth(bossKey.isActive());
+    }
+    if (changed.has('resizable')) {
+      applyResizeRegion();
     }
   });
 

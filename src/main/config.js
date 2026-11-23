@@ -23,19 +23,23 @@ const DEFAULTS = {
   mode: 'free',
   windowX: null,
   windowY: null,
-  idleOpacity: 0.06,
+  idleOpacity: 0,
+  resizable: true,
   firstRunShown: false,
-  schemaVersion: 2
+  schemaVersion: 3
 };
 
-// 配置迁移：把旧版残留的宽限期升级为"移开即隐藏"
+// 配置迁移：按顺序升级，保证幂等
 function migrate(parsed) {
   const out = { ...parsed };
   const ver = Number(parsed.schemaVersion) || 1;
   if (ver < 2 && out.graceMs === 500) {
     out.graceMs = 0;
   }
-  out.schemaVersion = 2;
+  if (ver < 3 && out.idleOpacity === 0.06) {
+    out.idleOpacity = 0;
+  }
+  out.schemaVersion = 3;
   return out;
 }
 
@@ -43,7 +47,7 @@ const EDITABLE_KEYS = new Set([
   'edge', 'windowWidth', 'windowHeight', 'revealPx', 'triggerBandPx',
   'graceMs', 'animationMs', 'pollMs', 'bossKey',
   'normalTrayLabel', 'stealthTrayLabel', 'openAtLogin', 'cleanMode', 'url',
-  'mode', 'windowX', 'windowY', 'idleOpacity', 'firstRunShown'
+  'mode', 'windowX', 'windowY', 'idleOpacity', 'firstRunShown', 'resizable'
 ]);
 
 let cache = null;
@@ -82,7 +86,7 @@ function load() {
   const migrated = migrate(parsed);
   cache = { ...DEFAULTS, ...sanitize(migrated) };
   // 若发生了迁移，写回磁盘使其一次性生效（保留用户其它设置与窗口位置）
-  if (Number(parsed.schemaVersion) !== 2 && Object.keys(parsed).length > 0) {
+  if (Number(parsed.schemaVersion) !== 3 && Object.keys(parsed).length > 0) {
     try {
       const file = configPath();
       fs.mkdirSync(path.dirname(file), { recursive: true });

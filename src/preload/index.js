@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('readerAPI', {
   toggleStealth: () => ipcRenderer.invoke('app:toggle-stealth'),
   hide: () => ipcRenderer.invoke('app:hide'),
   completeFirstRun: () => ipcRenderer.invoke('app:complete-first-run'),
+  holdVisible: (hold) => ipcRenderer.invoke('app:hold-visible', hold),
   setEdge: (edgeName) => ipcRenderer.invoke('app:set-edge', edgeName),
   quit: () => ipcRenderer.invoke('app:quit'),
   onStateChanged: (callback) => {

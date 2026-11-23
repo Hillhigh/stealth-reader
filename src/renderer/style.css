@@ -179,3 +179,61 @@ webview {
   cursor: pointer;
 }
 #btnGotIt:hover { background: #185fa5; }
+
+#settings {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 26, 32, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-app-region: no-drag;
+}
+#settings.hidden { display: none; }
+
+.set-card {
+  width: 92%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+.set-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #2b3138;
+  color: #fff;
+}
+.set-title { font-size: 14px; font-weight: 500; }
+.set-close {
+  border: none; background: transparent; color: #fff;
+  font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px;
+}
+.set-close:hover { color: #f09595; }
+.set-body { padding: 14px 16px 18px; }
+
+.set-row { margin-bottom: 14px; }
+.set-row label { display: block; font-size: 12px; color: #2b3138; margin-bottom: 6px; }
+.set-row select {
+  width: 100%; padding: 7px 8px; font-size: 12px;
+  border: 1px solid #c8ccd0; border-radius: 5px; background: #fff; color: #2b3138;
+}
+.set-row input[type=range] { width: 100%; accent-color: #185fa5; }
+.set-val { color: #185fa5; font-weight: 500; }
+.set-hint { font-size: 11px; color: #888780; line-height: 1.6; margin-top: 5px; }
+.set-hint code { background: #eef1f3; padding: 1px 5px; border-radius: 3px; font-family: Consolas, monospace; }
+.set-inline { display: flex; align-items: center; justify-content: space-between; }
+.set-inline label { margin-bottom: 0; }
+.set-inline input[type=checkbox] { width: 16px; height: 16px; accent-color: #185fa5; cursor: pointer; }
+.set-save-line { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
+#btnResetSettings {
+  border: 1px solid #c8ccd0; background: #fff; color: #444b52;
+  font-size: 11px; padding: 5px 10px; border-radius: 5px; cursor: pointer;
+}
+#btnResetSettings:hover { background: #eef1f3; }
+.set-saved { font-size: 11px; color: #1d9e75; }

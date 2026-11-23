@@ -33,6 +33,7 @@ class EdgeController extends EventEmitter {
     this.leftAt = null;
     this.display = null;
     this.firstRunHoldUntil = 0;
+    this.holdVisible = false;
     this._bounds = { x: 0, y: 0, width: 0, height: 0 };
     this._dragging = false;
     this._dragMoved = false;
@@ -79,6 +80,15 @@ class EdgeController extends EventEmitter {
     this.firstRunHoldUntil = 0;
     if (this.state === STATE.VISIBLE || this.state === STATE.SHOWING) {
       this.hide();
+    }
+  }
+
+  /** UI 面板打开时暂停自动隐藏 */
+  setHoldVisible(hold) {
+    this.holdVisible = Boolean(hold);
+    if (this.holdVisible) {
+      this.leftAt = null;
+      if (this.state === STATE.HIDDEN) this.show();
     }
   }
 
@@ -265,6 +275,7 @@ class EdgeController extends EventEmitter {
     }
 
     if (this.state === STATE.VISIBLE) {
+      if (this.holdVisible) return; // 面板打开时不自动隐藏
       if (pointInRect(cursor.x, cursor.y, this._bounds)) {
         this.leftAt = null;
       } else {
