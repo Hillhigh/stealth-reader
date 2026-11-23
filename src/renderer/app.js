@@ -38,8 +38,26 @@ function fillSettings() {
   setAutoStart.checked = Boolean(config.openAtLogin);
 }
 
+const SHELF_URL = 'https://fanqienovel.com/bookshelf?force_mobile=0';
+const HOME_URL = 'https://fanqienovel.com/?force_mobile=0';
+
+// 番茄默认把桌面 webview 当手机端，塞 force_mobile=1 后只显示"下载 App"。
+// 对首页/书架补 force_mobile=0 强制桌面版；阅读页与自定义网址不受影响。
+function desktopUrl(url) {
+  if (typeof url !== 'string') return url;
+  if (!/^https:\/\/fanqienovel\.com\/(bookshelf)?\/?(?:[?#].*)?$/.test(url)) return url;
+  if (/[?&]force_mobile=0(?:&|$)/.test(url)) return url;
+  try {
+    const u = new URL(url);
+    u.searchParams.set('force_mobile', '0');
+    return u.toString();
+  } catch (err) {
+    return url;
+  }
+}
+
 function loadSite() {
-  const url = config.url || 'https://fanqienovel.com/bookshelf';
+  const url = desktopUrl(config.url || SHELF_URL);
   onShelf = /bookshelf/.test(url);
   btnShelf.textContent = onShelf ? '书城' : '书架';
   btnShelf.title = onShelf ? '切换到书城首页' : '切换到我的书架';
@@ -48,8 +66,8 @@ function loadSite() {
 }
 
 function toggleShelf() {
-  const shelfUrl = 'https://fanqienovel.com/bookshelf';
-  const homeUrl = config.homeUrl || 'https://fanqienovel.com/';
+  const shelfUrl = SHELF_URL;
+  const homeUrl = desktopUrl(config.homeUrl || HOME_URL);
   const target = onShelf ? homeUrl : shelfUrl;
   onShelf = !onShelf;
   btnShelf.textContent = onShelf ? '书城' : '书架';
@@ -123,9 +141,15 @@ async function init() {
     loading.classList.remove('hidden');
   });
   webview.addEventListener('new-window', (e) => e.preventDefault());
-  // 用户在网页内点导航时同步按钮状态
+  // 用户在网页内点导航时同步按钮状态；番茄站内跳回首页/书架会丢掉参数，
+  // 这里自动补 force_mobile=0，避免又变成"下载 App"落地页。
   webview.addEventListener('did-navigate', (e) => {
     if (!/fanqienovel\.com/.test(e.url)) return;
+    const fixed = desktopUrl(e.url);
+    if (fixed !== e.url) {
+      webview.src = fixed;
+      return;
+    }
     onShelf = /bookshelf/.test(e.url);
     btnShelf.textContent = onShelf ? '书城' : '书架';
     btnShelf.title = onShelf ? '切换到书城首页' : '切换到我的书架';

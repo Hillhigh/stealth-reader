@@ -19,16 +19,32 @@ const DEFAULTS = {
   stealthTrayLabel: '系统服务',
   openAtLogin: false,
   cleanMode: false,
-  url: 'https://fanqienovel.com/bookshelf',
-  homeUrl: 'https://fanqienovel.com/',
+  // force_mobile=0：番茄默认会把桌面 webview 判定成手机端并塞 force_mobile=1，
+  // 手机端网页只显示"下载 App"引导；带此参数可强制走桌面版，书架/阅读均正常。
+  url: 'https://fanqienovel.com/bookshelf?force_mobile=0',
+  homeUrl: 'https://fanqienovel.com/?force_mobile=0',
   mode: 'free',
   windowX: null,
   windowY: null,
   idleOpacity: 0,
   resizable: true,
   firstRunShown: false,
-  schemaVersion: 4
+  schemaVersion: 5
 };
+
+// 仅对番茄首页/书架补全桌面版参数；其它页面（如 /reader/）与自定义网址不动。
+function desktopUrl(u) {
+  if (typeof u !== 'string') return u;
+  if (!/^https:\/\/fanqienovel\.com\/(bookshelf)?\/?(?:[?#].*)?$/.test(u)) return u;
+  if (/[?&]force_mobile=0(?:&|$)/.test(u)) return u;
+  try {
+    const parsed = new URL(u);
+    parsed.searchParams.set('force_mobile', '0');
+    return parsed.toString();
+  } catch (err) {
+    return u;
+  }
+}
 
 // 配置迁移：按顺序升级，保证幂等
 function migrate(parsed) {
@@ -44,7 +60,13 @@ function migrate(parsed) {
   if (ver < 4 && (out.url === 'https://fanqienovel.com/' || out.url === undefined)) {
     out.url = 'https://fanqienovel.com/bookshelf';
   }
-  out.schemaVersion = 4;
+  // v5：番茄把桌面 webview 误判为手机端，强制走"下载 App"落地页；
+  // 给首页/书架网址补 force_mobile=0 以恢复桌面版（自定义网址保持原样）。
+  if (ver < 5) {
+    out.url = desktopUrl(out.url);
+    if (out.homeUrl) out.homeUrl = desktopUrl(out.homeUrl);
+  }
+  out.schemaVersion = 5;
   return out;
 }
 
@@ -91,7 +113,7 @@ function load() {
   const migrated = migrate(parsed);
   cache = { ...DEFAULTS, ...sanitize(migrated) };
   // 若发生了迁移，写回磁盘使其一次性生效（保留用户其它设置与窗口位置）
-  if (Number(parsed.schemaVersion) !== 4 && Object.keys(parsed).length > 0) {
+  if (Number(parsed.schemaVersion) !== 5 && Object.keys(parsed).length > 0) {
     try {
       const file = configPath();
       fs.mkdirSync(path.dirname(file), { recursive: true });

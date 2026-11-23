@@ -92,3 +92,13 @@
 - [x] **I5** 语法检查 + 迁移单测（旧首页→书架 / 自定义保留 / 无字段→书架 / 幂等）全 PASS
 - [x] **I6** 更新 README/DESIGN/TASK，GUI 实测，重新打包，推送，交付新版 exe
 - **依赖**：H 全部完成 → **验收**：打开进书架、一键切换、重启保持所在页、老配置自动迁移均 PASS
+
+---
+
+## 阶段 J：v5 修复"下载 App"引导，强制桌面版（用户反馈）
+- [x] **J1** CDP 排查定位：番茄把桌面 webview 塞 force_mobile=1 走移动落地页；用户未掉登录；伪装 UA 无效，force_mobile=0 有效；否决安卓模拟器方案
+- [x] **J2** config：url/homeUrl 默认带 force_mobile=0，schemaVersion 4→5 迁移（首页/书架补参，阅读页/自定义网址不动，幂等）
+- [x] **J3** renderer：新增 desktopUrl()，loadSite()/toggleShelf() 走桌面版；did-navigate 站内导航自动补参
+- [x] **J4** 验证：desktopUrl 边界测试 7 项 PASS；端到端确认书架显示无下载引导、配置迁移 v5、站内导航补参、按钮双向切换带参、阅读页正文正常
+- [x] **J5** 更新 README/DESIGN/TASK，重新打包，推送，交付新版 exe
+- **验收**：打开进桌面版书架、正文可读、全程无"下载 App"引导、无需模拟器均 PASS
