@@ -6,6 +6,7 @@ const loading = document.getElementById('loading');
 const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 const btnMode = document.getElementById('btnMode');
+const btnShelf = document.getElementById('btnShelf');
 const onboarding = document.getElementById('onboarding');
 const settings = document.getElementById('settings');
 
@@ -19,6 +20,7 @@ let config = {};
 let firstRunDone = false;
 let onboardingTimer = null;
 let saveTimer = null;
+let onShelf = true;
 
 function applyConfig(cfg) {
   config = cfg || {};
@@ -37,9 +39,25 @@ function fillSettings() {
 }
 
 function loadSite() {
-  const url = config.url || 'https://fanqienovel.com/';
+  const url = config.url || 'https://fanqienovel.com/bookshelf';
+  onShelf = /bookshelf/.test(url);
+  btnShelf.textContent = onShelf ? '书城' : '书架';
+  btnShelf.title = onShelf ? '切换到书城首页' : '切换到我的书架';
   loading.classList.remove('hidden');
   webview.src = url;
+}
+
+function toggleShelf() {
+  const shelfUrl = 'https://fanqienovel.com/bookshelf';
+  const homeUrl = config.homeUrl || 'https://fanqienovel.com/';
+  const target = onShelf ? homeUrl : shelfUrl;
+  onShelf = !onShelf;
+  btnShelf.textContent = onShelf ? '书城' : '书架';
+  btnShelf.title = onShelf ? '切换到书城首页' : '切换到我的书架';
+  loading.classList.remove('hidden');
+  webview.src = target;
+  // 记住用户当前所在页，下次启动保持
+  API.setConfig({ url: target });
 }
 
 function updateState(state) {
@@ -105,8 +123,16 @@ async function init() {
     loading.classList.remove('hidden');
   });
   webview.addEventListener('new-window', (e) => e.preventDefault());
+  // 用户在网页内点导航时同步按钮状态
+  webview.addEventListener('did-navigate', (e) => {
+    if (!/fanqienovel\.com/.test(e.url)) return;
+    onShelf = /bookshelf/.test(e.url);
+    btnShelf.textContent = onShelf ? '书城' : '书架';
+    btnShelf.title = onShelf ? '切换到书城首页' : '切换到我的书架';
+  });
 
   document.getElementById('btnReload').addEventListener('click', loadSite);
+  btnShelf.addEventListener('click', toggleShelf);
   btnMode.addEventListener('click', async () => {
     const next = config.mode === 'edge' ? 'free' : 'edge';
     config = await API.setConfig({ mode: next });

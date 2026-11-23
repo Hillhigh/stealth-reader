@@ -19,14 +19,15 @@ const DEFAULTS = {
   stealthTrayLabel: '系统服务',
   openAtLogin: false,
   cleanMode: false,
-  url: 'https://fanqienovel.com/',
+  url: 'https://fanqienovel.com/bookshelf',
+  homeUrl: 'https://fanqienovel.com/',
   mode: 'free',
   windowX: null,
   windowY: null,
   idleOpacity: 0,
   resizable: true,
   firstRunShown: false,
-  schemaVersion: 3
+  schemaVersion: 4
 };
 
 // 配置迁移：按顺序升级，保证幂等
@@ -39,14 +40,18 @@ function migrate(parsed) {
   if (ver < 3 && out.idleOpacity === 0.06) {
     out.idleOpacity = 0;
   }
-  out.schemaVersion = 3;
+  // v4：默认打开书架页；仅当用户仍是未手动改过的旧首页默认值时升级
+  if (ver < 4 && (out.url === 'https://fanqienovel.com/' || out.url === undefined)) {
+    out.url = 'https://fanqienovel.com/bookshelf';
+  }
+  out.schemaVersion = 4;
   return out;
 }
 
 const EDITABLE_KEYS = new Set([
   'edge', 'windowWidth', 'windowHeight', 'revealPx', 'triggerBandPx',
   'graceMs', 'animationMs', 'pollMs', 'bossKey',
-  'normalTrayLabel', 'stealthTrayLabel', 'openAtLogin', 'cleanMode', 'url',
+  'normalTrayLabel', 'stealthTrayLabel', 'openAtLogin', 'cleanMode', 'url', 'homeUrl',
   'mode', 'windowX', 'windowY', 'idleOpacity', 'firstRunShown', 'resizable'
 ]);
 
@@ -86,7 +91,7 @@ function load() {
   const migrated = migrate(parsed);
   cache = { ...DEFAULTS, ...sanitize(migrated) };
   // 若发生了迁移，写回磁盘使其一次性生效（保留用户其它设置与窗口位置）
-  if (Number(parsed.schemaVersion) !== 3 && Object.keys(parsed).length > 0) {
+  if (Number(parsed.schemaVersion) !== 4 && Object.keys(parsed).length > 0) {
     try {
       const file = configPath();
       fs.mkdirSync(path.dirname(file), { recursive: true });

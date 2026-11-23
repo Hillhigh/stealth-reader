@@ -14,7 +14,8 @@
         <span id="statusText">待命</span>
       </div>
       <div class="title-actions">
-        <button id="btnSettings" title="设置">⚙ 设置</button>
+        <button id="btnShelf" title="切换书架 / 书城首页">书城</button>
+        <button id="btnSettings" title="设置">⚙</button>
         <button id="btnMode" title="切换定位模式">自由摆放</button>
         <button id="btnStealth" title="老板键隐藏/恢复">隐身</button>
         <button id="btnHide" title="隐藏窗口">收起</button>
@@ -24,7 +25,7 @@
     <div id="content">
       <div id="loading">
         <div class="spinner"></div>
-        <p>正在加载书架…</p>
+        <p>正在加载内容…</p>
         <button id="btnReload">重新加载</button>
       </div>
       <webview id="reader" partition="persist:fanqie"></webview>
@@ -37,7 +38,8 @@
           <p><b>2. 自动隐藏</b>：鼠标一移开，窗口立即完全隐藏，不留痕迹。</p>
           <p><b>3. 唤出</b>：鼠标移回原位置即可恢复；按 <code id="obRevealKey">Ctrl+Alt+E</code> 也能随时唤出。</p>
           <p><b>4. 老板键</b>：<code id="obBossKey">Ctrl+Alt+Q</code> 一键彻底隐藏，再按恢复。</p>
-          <p><b>5. 设置</b>：标题栏「设置」里可切换隐藏模式、淡化程度和窗口缩放。</p>
+          <p><b>5. 书架</b>：打开即进入你的书架；点标题栏「书城」可切换到书城找书。</p>
+          <p><b>6. 设置</b>：标题栏「⚙」里可切换隐藏模式、淡化程度和窗口缩放。</p>
         </div>
         <button id="btnGotIt">知道了，开始使用</button>
       </div>
